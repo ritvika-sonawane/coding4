@@ -226,7 +226,10 @@ class PositionwiseFeedForward(torch.nn.Module):
     def forward(self, x):
         """Forward function."""
         # TODO: x -> w1 -> activation -> dropout -> w2
-        
+        x = self.w_1(x)
+        x = self.activation(x)
+        x = self.dropout(x)
+        x = self.w_2(x)
         return x
 
 
@@ -299,7 +302,7 @@ class MultiHeadedAttention(nn.Module):
         # TODO: calculate attention weights
         # AKA softmax(QK^T / sqrt(d_k))
         # scores is (batch, head, time1, time2)
-        attn_weights = 
+        attn_weights = torch.softmax(scores, dim=-1) 
 
         if mask is not None:
             attn_weights = attn_weights.masked_fill(
@@ -309,7 +312,7 @@ class MultiHeadedAttention(nn.Module):
         p_attn = self.dropout(attn_weights)
 
         # TODO: attention weights @ value 
-        x = 
+        x = torch.matmul(p_attn, value) 
 
         # Reshape attention heads back to model dimension
         x = (
@@ -317,7 +320,7 @@ class MultiHeadedAttention(nn.Module):
         )  # (batch, time1, d_model)
 
         # TODO: out projection
-
+        x = self.linear_out(x)
         return x
 
     def forward(self, query, key, value, mask, pos_emb=None):
@@ -339,7 +342,7 @@ class MultiHeadedAttention(nn.Module):
         # Attention is softmax(QK^T / sqrt(d_k)) V
 
         # TODO calculate QK^T / sqrt(d_k)
-        scores = 
+        scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.d_k)
         return self.forward_attention(v, scores, mask)
 
 class RelPositionMultiHeadedAttention(MultiHeadedAttention):

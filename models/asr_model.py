@@ -69,8 +69,10 @@ class ASRModel(torch.nn.Module):
         # TODO: implement forward of the ASR model
 
         # 1. Encoder forward (CNN + Transformer)
+        encoder_out, encoder_out_lens = self.encoder(xs, xlens)
 
         # 2. Compute Loss by calling self.calculate_loss()
+        loss_att = self.calculate_loss(encoder_out, encoder_out_lens, ys, ylens)
 
         return loss_att
 
@@ -87,8 +89,10 @@ class ASRModel(torch.nn.Module):
         # TODO: Implement decoder forward + loss calculation
 
         # 1. Forward decoder
+        decoder_out = self.decoder(encoder_out, encoder_out_lens, ys_in_pad, ys_in_lens)
 
         # 2. Compute attention loss using self.criterion_att()
+        loss_att = self.criterion_att(decoder_out, ys_out_pad)
         
         return loss_att
 
@@ -102,11 +106,38 @@ class ASRModel(torch.nn.Module):
         xlens = torch.tensor(xlens, dtype=torch.long, device=xs.device)
 
         # TODO: Encoder forward (CNN + Transformer)
+        encoder_out, encoder_out_lens = self.encoder(xs, xlens)
 
         # TODO: implement greedy decoding
         # Hints:
         # - Start from <sos> and predict new tokens step-by-step until <eos>. You need a loop.
         # - You may need to set a maximum decoding length.
         # - You can use self.decoder.forward_one_step() for each step which has caches
+        
+        batch_size = encoder_out.size(0)
+        max_len = 100  # Maximum decoding length
+        
+        # Initialize predictions with <sos> token
+        predictions = torch.ones(batch_size, 1, dtype=torch.long, device=xs.device) * self.sos
+        cache = None
+        
+        for _ in range(max_len):
+            # Get current sequence length
+            ys_lens = torch.tensor([predictions.size(1)] * batch_size, dtype=torch.long, device=xs.device)
+            
+            # Forward one step
+            y_pred, cache = self.decoder.forward_one_step(
+                encoder_out, encoder_out_lens, predictions, ys_lens, cache
+            )
+            
+            # Get the most likely token
+            next_token = y_pred.argmax(dim=-1, keepdim=True)
+            
+            # Append to predictions
+            predictions = torch.cat([predictions, next_token], dim=1)
+            
+            # Check if all sequences have generated <eos>
+            if (next_token == self.eos).all():
+                break
 
         return predictions
