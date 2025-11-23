@@ -149,6 +149,21 @@ class RelPositionalEncoding(torch.nn.Module):
         pe = torch.cat([pe_positive, pe_negative], dim=1)
         self.pe = pe.to(device=x.device, dtype=x.dtype)
 
+    def forward(self, x: torch.Tensor):
+        """Add positional encoding.
+
+        Args:
+            x (torch.Tensor): Input tensor (batch, time, `*`).
+
+        Returns:
+            torch.Tensor: Encoded tensor (batch, time, `*`).
+            torch.Tensor: Positional embedding tensor (batch, 2*time-1, `*`).
+        """
+        self.extend_pe(x)
+        x = x * self.xscale
+        x = self.dropout(x)
+        return x, self.pe[:, :x.size(1) * 2 - 1]
+
 class Conv2dSubsampling(torch.nn.Module):
     """Convolutional 2D subsampling (to 1/4 length).
 
