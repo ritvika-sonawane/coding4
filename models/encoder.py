@@ -66,15 +66,26 @@ class TransformerEncoderLayer(nn.Module):
         # mask is used in the attention module
         # x -> norm1 -> att -> dropout -> + -> x
         # |_______________________________|
+        residual = x
+        x = self.norm1(x)
+        x = self.self_attn(x, x, x, mask, pos_emb)
+        x = self.dropout(x)
+        x = residual + x
 
         # TODO: convolution layer 
         # x -> conv -> x
         # this defaults to nn.Identity()
         # unless conformer_kernel_size > 0 in the encoder
+        x = self.conv(x)
 
         # TODO: feed-forward network with residual connection
         # x -> norm2 -> ffn -> dropout -> + -> x
         # |_______________________________|
+        residual = x
+        x = self.norm2(x)
+        x = self.feed_forward(x)
+        x = self.dropout(x)
+        x = residual + x
 
         if pos_emb is not None:
             x = (x, pos_emb)
@@ -164,8 +175,10 @@ class TransformerEncoder(torch.nn.Module):
         masks = (~make_pad_mask(ilens)[:, None, :]).to(xs_pad.device)
 
         # TODO: apply convolutional subsampling, i.e., self.embed
+        xs_pad, masks = self.embed(xs_pad, masks)
 
         # TODO: forward encoder layers
+        xs_pad, masks = self.encoders(xs_pad, masks)
 
         if isinstance(xs_pad, tuple):
             xs_pad, pos_emb = xs_pad[0], xs_pad[1]

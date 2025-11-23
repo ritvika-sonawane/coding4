@@ -1,0 +1,31 @@
+### Optimized config for Monolingual (English only) - Checkpoint 1
+### Target: WER < 60%
+
+# Model Architecture
+hidden_dim: 256
+attention_heads: 4
+linear_units: 2048  # Increased from 1024
+
+# Encoder
+eblocks: 12  # More layers for better performance
+edropout: 0.1
+econformer_kernel_size: 31  # Enable Conformer convolutions (standard size)
+eposition_embedding_type: relative  # Relative positional encoding performs better
+
+# Decoder
+dblocks: 6
+ddropout: 0.1
+
+# Training
+batch_bins: 5000000  # Increased batch size for better convergence
+accum_grad: 2  # Gradient accumulation for effective larger batch
+nepochs: 60
+nworkers: 4
+log_interval: 100
+
+# Optimization
+lr: 2e-3  # Slightly higher learning rate
+wdecay: 1e-6
+warmup_steps: 10000  # Faster warmup
+label_smoothing: 0.1
+
