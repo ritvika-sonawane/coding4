@@ -46,7 +46,7 @@ class ASRModel(torch.nn.Module):
             size=params.odim,
             padding_idx=self.ignore_id,
             smoothing=params.label_smoothing,
-            normalize_length=False,
+            normalize_length=True,  # CRITICAL FIX: normalize by number of tokens, not batch size
         )
 
     def forward(

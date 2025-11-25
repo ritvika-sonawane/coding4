@@ -1,0 +1,31 @@
+### Fast Bilingual Config - Trains in ~6-8 hours
+### Lighter model but should still achieve WER < 30%, ACC > 90%
+
+# Model Architecture - Moderate size
+hidden_dim: 256  # Moderate size
+attention_heads: 4
+linear_units: 1024
+
+# Encoder
+eblocks: 8  # Reduced from 16
+edropout: 0.1
+econformer_kernel_size: 15  # Smaller kernel for speed
+eposition_embedding_type: absolute  # Simpler
+
+# Decoder
+dblocks: 4  # Reduced from 6
+ddropout: 0.1
+
+# Training
+batch_bins: 6000000
+accum_grad: 2
+nepochs: 50  # Reduced from 80
+nworkers: 4
+log_interval: 50
+
+# Optimization
+lr: 2e-3
+wdecay: 1e-6
+warmup_steps: 8000
+label_smoothing: 0.1
+
